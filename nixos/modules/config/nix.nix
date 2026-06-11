@@ -135,6 +135,24 @@ in
 
   options = {
     nix = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = ''
+          Whether to enable Nix.
+          Disabling Nix makes the system hard to modify and the Nix programs and configuration will not be made available by NixOS itself.
+        '';
+      };
+
+      package = lib.mkOption {
+        type = lib.types.package;
+        default = pkgs.nix;
+        defaultText = lib.literalExpression "pkgs.nix";
+        description = ''
+          This option specifies the Nix package instance to use throughout the system.
+        '';
+      };
+
       checkConfig = mkOption {
         type = types.bool;
         default = true;
@@ -367,6 +385,21 @@ in
 
   config = mkIf cfg.enable {
     environment.etc."nix/nix.conf".source = nixConf;
+
+    environment.systemPackages = [
+      nixPackage
+      pkgs.nix-info
+    ]
+    ++ lib.optional config.programs.bash.completion.enable pkgs.nix-bash-completions;
+
+    systemd.tmpfiles.rules = [
+      "d  /nix/var                           0755 root root - -"
+      "L+ /nix/var/nix/gcroots/booted-system 0755 root root - /run/booted-system"
+      # Boot-time cleanup
+      "R! /nix/var/nix/gcroots/tmp           -    -    -    - -"
+      "R! /nix/var/nix/temproots             -    -    -    - -"
+    ];
+
     nix.settings = {
       trusted-public-keys = [ "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=" ];
       trusted-users = [ "root" ];

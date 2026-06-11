@@ -46,15 +46,17 @@ let
 in
 
 {
-  config = lib.mkIf (cfg.enable && nixPackage.pname == "lix") {
+  config = lib.mkIf (cfg.enableDaemon && nixPackage.pname == "lix") {
+    assertions = [
+      {
+        assertion = cfg.enableDaemon -> cfg.enable;
+        message = ''
+          Enabling the Lix Daemon requires also enabling Nix (config.nix.enable = true).
+        '';
+      }
+    ];
     # Require the tun kernel module for pasta, can be disabled if pasta is not used.
     boot.kernelModules.tun = lib.mkDefault true;
-
-    environment.systemPackages = [
-      nixPackage
-      pkgs.nix-info
-    ]
-    ++ lib.optional (config.programs.bash.completion.enable) pkgs.nix-bash-completions;
 
     systemd.packages = [ nixPackage ];
 
