@@ -23,9 +23,9 @@ let
       // config.networking.proxy.envVars;
 
     serviceConfig = {
-      CPUSchedulingPolicy = cfg.daemonCPUSchedPolicy;
-      IOSchedulingClass = cfg.daemonIOSchedClass;
-      IOSchedulingPriority = cfg.daemonIOSchedPriority;
+      CPUSchedulingPolicy = cfg.daemon.cpuSchedulingPolicy;
+      IOSchedulingClass = cfg.daemon.ioSchedulingClass;
+      IOSchedulingPriority = cfg.daemon.ioSchedulingPriority;
     };
   };
 

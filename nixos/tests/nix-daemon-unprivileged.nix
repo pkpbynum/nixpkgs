@@ -12,8 +12,8 @@
 
     nix = {
       package = pkgs.nixVersions.git;
-      daemonUser = "nix-daemon";
-      daemonGroup = "nix-daemon";
+      daemon.user = "nix-daemon";
+      daemon.group = "nix-daemon";
       settings.experimental-features = [
         "local-overlay-store"
         "auto-allocate-uids"

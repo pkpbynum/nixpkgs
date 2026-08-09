@@ -27,7 +27,8 @@ in
       ];
       to = [
         "nix"
-        "daemonIOSchedPriority"
+        "daemon"
+        "ioSchedulingPriority"
       ];
     })
     (lib.mkRenamedOptionModuleWith {
@@ -41,16 +42,76 @@ in
         "readOnlyNixStore"
       ];
     })
-    (lib.mkRemovedOptionModule [ "nix" "daemonNiceLevel" ] "Consider nix.daemonCPUSchedPolicy instead.")
+    (lib.mkRenamedOptionModuleWith {
+      sinceRelease = 2611;
+      from = [
+        "nix"
+        "daemonUser"
+      ];
+      to = [
+        "nix"
+        "daemon"
+        "user"
+      ];
+    })
+    (lib.mkRenamedOptionModuleWith {
+      sinceRelease = 2611;
+      from = [
+        "nix"
+        "daemonGroup"
+      ];
+      to = [
+        "nix"
+        "daemon"
+        "group"
+      ];
+    })
+    (lib.mkRenamedOptionModuleWith {
+      sinceRelease = 2611;
+      from = [
+        "nix"
+        "daemonCPUSchedPolicy"
+      ];
+      to = [
+        "nix"
+        "daemon"
+        "cpuSchedulingPolicy"
+      ];
+    })
+    (lib.mkRenamedOptionModuleWith {
+      sinceRelease = 2611;
+      from = [
+        "nix"
+        "daemonIOSchedClass"
+      ];
+      to = [
+        "nix"
+        "daemon"
+        "ioSchedulingClass"
+      ];
+    })
+    (lib.mkRenamedOptionModuleWith {
+      sinceRelease = 2611;
+      from = [
+        "nix"
+        "daemonIOSchedPriority"
+      ];
+      to = [
+        "nix"
+        "daemon"
+        "ioSchedulingPriority"
+      ];
+    })
+    (lib.mkRemovedOptionModule [ "nix" "daemonNiceLevel" ] "Consider nix.daemon.cpuSchedulingPolicy instead.")
     {
       # Unprivileged Nix daemon
-      config = lib.mkIf (cfg.daemonUser != "root") {
+      config = lib.mkIf (cfg.daemon.user != "root") {
         assertions = [
           {
             message = ''
               The Nix daemon cannot run as the root group when not running as the root user.
             '';
-            assertion = cfg.daemonGroup != "root";
+            assertion = cfg.daemon.group != "root";
           }
           {
             message = ''
@@ -85,8 +146,8 @@ in
           # Nix wants a HOME it can access to cache substituter contents, among other things.
           environment.HOME = "%S/nix-daemon";
           serviceConfig = {
-            User = cfg.daemonUser;
-            Group = cfg.daemonGroup;
+            User = cfg.daemon.user;
+            Group = cfg.daemon.group;
 
             StateDirectory = "nix-daemon";
 
@@ -104,7 +165,7 @@ in
           "nosuid"
         ];
 
-        users.users."${cfg.daemonUser}" = {
+        users.users."${cfg.daemon.user}" = {
           subUidRanges = [
             {
               startUid = cfg.settings.start-id;
@@ -120,11 +181,11 @@ in
         };
 
         systemd.tmpfiles.rules = [
-          "d /nix/store                   0755 ${config.nix.daemonUser} ${config.nix.daemonGroup} - -"
-          "Z /nix/var                     0755 ${config.nix.daemonUser} ${config.nix.daemonGroup} - -"
-          "d /nix/var/nix/builds          0755 ${config.nix.daemonUser} ${config.nix.daemonGroup} 7d -"
-          "d /nix/var/nix/daemon-socket   0755 ${config.nix.daemonUser} ${config.nix.daemonGroup} - -"
-          "d /nix/var/nix/gc-roots-socket 0755 ${config.nix.daemonUser} ${config.nix.daemonGroup} - -"
+          "d /nix/store                   0755 ${config.nix.daemon.user} ${config.nix.daemon.group} - -"
+          "Z /nix/var                     0755 ${config.nix.daemon.user} ${config.nix.daemon.group} - -"
+          "d /nix/var/nix/builds          0755 ${config.nix.daemon.user} ${config.nix.daemon.group} 7d -"
+          "d /nix/var/nix/daemon-socket   0755 ${config.nix.daemon.user} ${config.nix.daemon.group} - -"
+          "d /nix/var/nix/gc-roots-socket 0755 ${config.nix.daemon.user} ${config.nix.daemon.group} - -"
         ];
 
         systemd.services.nix-roots-daemon = {
@@ -159,17 +220,17 @@ in
         '';
       };
 
-      daemonUser = lib.mkOption {
+      daemon.user = lib.mkOption {
         type = lib.types.str;
         default = "root";
         description = ''
           User to use to run the Nix daemon.
           If this is not "root" then the Nix daemon will set several settings to preserve functionality.
-          When setting this option, you must also set `nix.daemonGroup`.
+          When setting this option, you must also set `nix.daemon.group`.
         '';
       };
 
-      daemonGroup = lib.mkOption {
+      daemon.group = lib.mkOption {
         type = lib.types.str;
         default = "root";
         description = ''
@@ -177,7 +238,7 @@ in
         '';
       };
 
-      daemonCPUSchedPolicy = lib.mkOption {
+      daemon.cpuSchedulingPolicy = lib.mkOption {
         type = lib.types.enum [
           "other"
           "batch"
@@ -211,7 +272,7 @@ in
         '';
       };
 
-      daemonIOSchedClass = lib.mkOption {
+      daemon.ioSchedulingClass = lib.mkOption {
         type = lib.types.enum [
           "best-effort"
           "idle"
@@ -237,7 +298,7 @@ in
         '';
       };
 
-      daemonIOSchedPriority = lib.mkOption {
+      daemon.ioSchedulingPriority = lib.mkOption {
         type = lib.types.int;
         default = 4;
         example = 1;
@@ -275,7 +336,7 @@ in
     systemd.packages = [ nixPackage ];
 
     # The upstream Nix tmpfiles.d file assumes the daemon runs as root
-    systemd.tmpfiles.packages = lib.mkIf (cfg.daemonUser == "root") [ nixPackage ];
+    systemd.tmpfiles.packages = lib.mkIf (cfg.daemon.user == "root") [ nixPackage ];
 
     systemd.sockets.nix-daemon.wantedBy = [ "sockets.target" ];
 
@@ -285,7 +346,7 @@ in
         config.programs.ssh.package
       ]
       # For running "newuidmap"
-      ++ lib.optional (cfg.daemonUser != "root") "/run/wrappers";
+      ++ lib.optional (cfg.daemon.user != "root") "/run/wrappers";
 
       environment =
         cfg.envVars
@@ -295,9 +356,9 @@ in
         // config.networking.proxy.envVars;
 
       serviceConfig = {
-        CPUSchedulingPolicy = cfg.daemonCPUSchedPolicy;
-        IOSchedulingClass = cfg.daemonIOSchedClass;
-        IOSchedulingPriority = cfg.daemonIOSchedPriority;
+        CPUSchedulingPolicy = cfg.daemon.cpuSchedulingPolicy;
+        IOSchedulingClass = cfg.daemon.ioSchedulingClass;
+        IOSchedulingPriority = cfg.daemon.ioSchedulingPriority;
       };
 
       restartTriggers = [ config.environment.etc."nix/nix.conf".source ];

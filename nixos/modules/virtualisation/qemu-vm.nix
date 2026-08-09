@@ -1236,8 +1236,8 @@ in
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
-        User = lib.mkIf (config.nix.daemonUser != "root") config.nix.daemonUser;
-        Group = lib.mkIf (config.nix.daemonGroup != "root") config.nix.daemonGroup;
+        User = lib.mkIf (config.nix.daemon.user != "root") config.nix.daemon.user;
+        Group = lib.mkIf (config.nix.daemon.group != "root") config.nix.daemon.group;
       };
       script = ''
         if [[ "$(cat /proc/cmdline)" =~ regInfo=([^ ]*) ]]; then
