@@ -208,6 +208,15 @@ in
         '';
       };
 
+      useFossCache = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = ''
+          Whether to configure cache.nixos.org as a substituter and
+          trust trust its public key.
+        '';
+      };
+
       settings = mkOption {
         type = types.submodule {
           freeformType = semanticConfType;
@@ -429,9 +438,11 @@ in
 
     environment.etc."nix/nix.conf".source = nixConf;
     nix.settings = {
-      trusted-public-keys = [ "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=" ];
+      trusted-public-keys = mkIf cfg.useFossCache [
+        "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+      ];
       trusted-users = [ "root" ];
-      substituters = mkAfter [ "https://cache.nixos.org/" ];
+      substituters = mkIf cfg.useFossCache (mkAfter [ "https://cache.nixos.org/" ]);
       system-features = defaultSystemFeatures;
     };
 
